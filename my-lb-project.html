@@ -1,0 +1,305 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+<head>
+  <meta http-equiv="CONTENT-TYPE" content="text/html; charset=utf-8">
+  <title>My LinuxBIOS Project</title>
+  <meta name="GENERATOR" content="OpenOffice.org 2.2  (Unix)">
+  <meta name="CREATED" content="20070731;11335300">
+  <meta name="CHANGED" content="20070731;22305400">
+  <style type="text/css">
+	<!--
+		@page { size: 8.5in 11in; margin: 0.79in }
+		P { margin-bottom: 0.08in }
+		H1 { margin-bottom: 0.08in }
+		H1.western { font-family: "Liberation Sans", sans-serif; font-size: 16pt }
+		H1.cjk { font-family: "DejaVu Sans"; font-size: 16pt }
+		H1.ctl { font-family: "DejaVu Sans"; font-size: 16pt }
+		H2 { margin-bottom: 0.08in }
+		H2.western { font-family: "Liberation Sans", sans-serif; font-size: 14pt; font-style: italic }
+		H2.cjk { font-size: 14pt; font-style: italic }
+		H2.ctl { font-size: 14pt; font-style: italic }
+		H3 { margin-bottom: 0.08in }
+		H3.western { font-family: "Liberation Sans", sans-serif }
+	-->
+	</style>
+</head>
+<body dir="ltr" lang="en-US">
+<h1 class="western" style="" align="center">My
+LinuxBIOS Project</h1>
+<p align="center">John Selmys - July 2007</p>
+<h3>Motivation</h3>
+<p style="font-style: normal;">I wanted to learn
+how to build and install <a href="http://www.linuxbios.org/">LinuxBIOS</a>
+on a PC. I also wanted to use the virtualization hardware of my CPU –
+I read reports that many proprietary BIOSs have disabled hardware
+support for virtual machines. I believe in Free and Open Source
+Software (<a href="http://en.wikipedia.org/wiki/FOSS">FOSS</a>) and
+enjoy the freedom to tinker with hardware I own.<br>
+</p>
+<h3 class="western" style="">Preamble</h3>
+<p style="">I purchased a new PC with a
+motherboard that supports LinuxBIOS. Here's what I got:</p>
+<ol>
+  <li>
+    <p>Gigabyte M57SLI-S4 rev 1.1 – came with Award BIOS version F8</p>
+  </li>
+  <li>
+    <p>BFG Gforce2 8600GTS video card</p>
+  </li>
+  <li>
+    <p>AMD Athlon 64 X2 – 6000+</p>
+  </li>
+  <li>
+    <p>4GB RAM - OCZ PC2-6400</p>
+  </li>
+  <li>
+    <p>Seagate 320GB SATA HD</p>
+  </li>
+</ol>
+<h3 class="western" style="">Inamble</h3>
+<ol>
+  <li>
+    <p style="">Installed Fedora 7 (X86_64 version) and upgraded to
+kernel 2.6.22. <br>
+    </p>
+  </li>
+  <li>
+    <p style="">I installed BIOS version F9 to see if virtualization
+instructions in the CPU were enabled – they were not. </p>
+  </li>
+  <li>
+    <p><span style="">Ordered replacement BIOS chip (</span><a
+ href="49LF040.pdf">SST
+49LF040</a>) <span style="">and extractor tool from </span><a
+ href="http://www.ultrabios.com"><span style="">ultrabios</span></a>.</p>
+  </li>
+  <li>
+    <p><span style="">Here is a </span><a href="chip-tool.jpg">photo</a>
+    </p>
+  </li>
+  <li>
+    <p style="">The chip (4 MBits or 512 MBytes) fits a PLCC-32 (32
+pin)
+socket. I bought the extractor tool as a precaution.</p>
+  </li>
+  <li>
+    <p><span style="">I found a guy, Frank, who is from China and now
+lives in Markham (just north of Toronto). Frank has lots of experience
+of soldering components onto motherboards. You can reach Frank at </span><a
+ href="http://biosxp.net/"></a><a href="http://biosxp.net/"></a><a
+ href="http://biosxp.net/"><span style="">biosxp.net</span></a><a
+ href="http://biosxp.net/"></a><a href="http://biosxp.net/"></a><span
+ style="">. </span> </p>
+  </li>
+  <li>
+    <p><span style="">Frank did this </span><a
+ href="http://private.vlsi.informatik.tu-darmstadt.de/st/instructions.html"><span>modification</span></a>
+for me. He did a wonderful job and only charged $50 for his
+labour and parts. Here's a <a href="mb-with-plcc.jpg">
+photo</a> of his work.</p>
+  </li>
+  <li>
+    <p><span style="">I then put my PC back together and inserted the
+new BIOS chip into the socket. Here's a <a href="mb-with-plcc-rom.jpg">photo</a>
+    </span></p>
+  </li>
+  <li>
+    <p style="">So now I had a PC with two BIOS chips (both with Award
+BIOS F9) and with a flick of a switch I could boot from either BIOS.</p>
+  </li>
+  <li>
+    <p style="">I got a NABU (circa 1983) dumb terminal from a friend
+at work and connected it to my PC's serial port. You'll need this
+because LinuxBIOS sends log messages to the serial port. Without it you
+won't see any boot-up messages. </p>
+  </li>
+  <li>
+    <p style="">I enabled the telnet server on my PC and connected to
+it with the NABU terminal. I had to set the baud rate to 19200 in
+/etc/inittab because this was the maximum the NABU could handle.</p>
+  </li>
+</ol>
+<p style=""> <b>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp; s0:2345:respawn:/sbin/agetty -L -h
+ttyS0 1 19200 vt100-nav</b></p>
+<ol start="12">
+  <li>
+    <p style="">I found out later that this was a dumb idea because the
+boot-up messages streamed to the serial port by LinuxBIOS were going
+much faster then 19200 and I just got garbage on the screen. Later I
+dumped the NABU and set up a second PC with minicom. I set the serial
+port speed to 115200 baud. Now I could see the boot-up messages. NOTE:
+The minicom PC should be connected to the LinuxBIOS PC with a serial
+null modem cable. I bouht one at a surplus computer store for $4.</p>
+  </li>
+  <li>
+    <p style="">Now I had to start dealing with software so I tried to
+follow the <a
+ href="http://linuxbios.org/GIGABYTE_GA-M57SLI-S4_Build_Tutorial">
+build tutorial</a> for my board.</p>
+  </li>
+  <li>
+    <p style="">The first thing I did was download, build and install
+flashrom, which I will need to program my bios chip. Here are the steps:</p>
+  </li>
+</ol>
+<p><span style=""> </span><b>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp; svn co
+svn://linuxbios.org/repos/trunk/util/flashrom</b></p>
+<p><b>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; make</b></p>
+<p><b>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; make
+install (do this as root and it will put the flashrom
+program into /usr/local/bin)</b></p>
+<ol start="15">
+  <li>
+    <p style="">Now I made a backup image of my BIOS like this:</p>
+  </li>
+</ol>
+<p style=""> <b>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp; flashrom -r award-bios.f9</b></p>
+<ol start="16">
+  <li>
+    <p style="">Of course, you should be root when running flashrom so
+be careful.</p>
+  </li>
+  <li>
+    <p style="">For more help with flashrom you can use the -h option
+to view the syntax and options.</p>
+  </li>
+  <li>
+    <p style="">Now I had to download, configure and build <a
+ href="http://linuxbios.org/FILO">FILO</a>, which would be my payload.</p>
+    <p><b>&nbsp;&nbsp;&nbsp; &nbsp; svn co
+svn://openbios.org/filo/trunk/filo-0.5</b> </p>
+  </li>
+  <li>
+    <p><span style="">Change to the filo-0.5 directory and run the make
+command. This will create a Config file which you need to modify.
+Here's my </span><a href="Config">Config</a>
+file. You also may need to apply a patch file to give your hard drive
+time to spin up. Here is the <a href="patch0">patch</a>. In the
+filo-0.5 directory just run this command: <span
+ style="font-weight: bold;">patch -p0 &lt; patch0</span><br>
+    </p>
+  </li>
+  <li>
+    <p style="">Notice that the Config file will be using GRUB
+emulation mode to load the Linux kernel. For this reason the Config
+file must include the full path name of your menu.lst file, which is
+the default name of GRUB's menu file. Also notice that the device name
+I use is hde3, which FILO recognizes as sda3.</p>
+  </li>
+  <li>
+    <p><span style="">My menu.lst file is named </span><a
+ href="lbmenu.lst">lbmenu.lst</a>. You can see how it resembles a
+regular GRUB menu file. But
+make note of the root device, (hda4,2), which is equivalent to sda3.</p>
+  </li>
+  <li>
+    <p style="">You'll also notice the lbmenu.lst file contains the tty
+port (ttyS0 or COM1) and the baud rate (115200) that LinuxBIOS will use
+to stream boot-up (log) messages.</p>
+  </li>
+  <li>
+    <p style="">Now run make again and this will produce filo.elf, the
+payload, which we'll need later when we build LinuxBIOS.</p>
+  </li>
+  <li>
+    <p style="">At last we now need to download, configure and build
+the LinuxBIOS. The product of this effort will be a BIOS image
+(linuxbios.rom) which we'll flash to our second BIOS chip using the
+flashrom program. </p>
+  </li>
+</ol>
+<p><span style=""> </span><b>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp; svn co
+svn://linuxbios.org/repos/trunk/LinuxBIOSv2</b></p>
+<ol start="25">
+  <li>
+    <p style="">We'll be using version 2, the stable version. Version 3
+is still under development. </p>
+  </li>
+  <li>
+    <p style="">Change to directory LinuxBIOSv2/targets/gigabyte and
+create a directory named payloads. Copy the filo.elf payload file that
+you created earlier to this payloads directory.</p>
+  </li>
+  <li>
+    <p style="">Change to directory LinuxBIOSv2/targets and run the
+command</p>
+  </li>
+</ol>
+<p><span style=""> </span><b>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp; ./buildtarget
+gigabyte/m57sli</b></p>
+<ol start="28">
+  <li>
+    <p style="">Edit the file targets/gigabyte/m57sli/Config.lb
+updating all the lines that start with 'payload'. There are 2
+occurrences, one for the normal image, and one for the fallback image.</p>
+  </li>
+  <li>
+    <p style="">Finally we can build the BIOS image by changing to
+directory LinuxBIOSv2/targets/gigabyte/m57sli/m57sli and running the
+make command. Yes, there are two directories named m57sli – it's not a
+typo.</p>
+  </li>
+  <li>
+    <p style="">If all goes well you should see a file named
+linuxbios.rom (512K) in the directory.</p>
+  </li>
+  <li>
+    <p style="">Now you can switch to your new BIOS chip. In my setup I
+installed a toggle switch on the back of my PC. I also labeled the
+switch (ORIG and NEW) so I'd always know which is which.</p>
+  </li>
+  <li>
+    <p style="">Use flashrom to flash your new BIOS chip. You'll need
+to be root to do this. </p>
+  </li>
+</ol>
+<p><span style=""> </span><b>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp; flashrom -v -w
+linuxbios.rom</b></p>
+<ol start="33">
+  <li>
+    <p style="">So now you should have the Award BIOS sitting in the
+original chip and the LinuxBIOS in the new chip.</p>
+  </li>
+  <li>
+    <p style="">Go to your monitor PC and start minicom. You'll need to
+set the modem initialization string to ~^M~. You can also use CTRL-A L
+to turn on the capture file.</p>
+  </li>
+  <li>
+    <p style="">Now power off your linuxBIOS PC, as a reset may not
+work. Now power it on and watch the messages on your logging PC. After
+some time you should get a graphical login prompt on your LinuxBIOS PC.
+    </p>
+  </li>
+  <li>
+    <p style="">Have a lot of fun.</p>
+  </li>
+</ol>
+<h3 class="western" style="">Postamble</h3>
+<ol>
+  <li>I don't have a faster boot-up with LinuxBIOS because most of the
+time is taken in loading the kernel and initrd files and starting X. Of
+course you can speed these up by loading everything into the BIOS chip.
+There are some nice YouTube examples <a
+ href="http://www.youtube.com/watch?v=nuzRsXKm_NQ">here</a> and <a
+ href="http://www.youtube.com/watch?v=Ig8vW5ACP-k">here</a>.</li>
+  <li>Nvidia's proprietary graphics driver wouldn't work so instead I
+used&nbsp; the open source NV (Not nVidia) driver.</li>
+  <li>I use <a
+ href="http://members.dslextreme.com/users/billw/gkrellm/gkrellm.html">gkrellm</a>
+to monitor my CPU temperatures but they seem incorrect hovering around
+65C. When using the Award BIOS, gkrellm shows temperatures much lower
+around 30C.</li>
+  <li>The good news is that I can now load and run <a
+ href="http://kvm.qumranet.com/kvmwiki">KVM-based</a> virtual machines.</li>
+</ol>
+<br>
+<br>
+</body>
+</html>
