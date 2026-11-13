@@ -1,0 +1,61 @@
+﻿My LinuxBIOS Project
+July 2007
+Motivation
+I wanted to learn how to build and install LinuxBIOS on a PC. I also wanted to use the virtualization hardware of my CPU – I read reports that many proprietary BIOSs have disabled hardware support for virtual machines.
+
+Preamble
+
+I purchased a new PC with a motherboard that supports LinuxBIOS. Here's what I got:
+    1. Gigabyte M57SLI-S4 rev 1.1 – came with Award BIOS version F8
+    2. BFG Gforce2 8600GTS video card
+    3. AMD Athlon 64 X2 – 6000+
+    4. 4GB RAM - OCZ PC2-6400
+    5. Seagate 320GB SATA HD
+
+Inamble
+
+    1. Installed Fedora 7 (X86_64 version) and found virtualization disabled by Award BIOS version F8.
+    2. I installed BIOS version F9 to see if virtualization instructions in the CPU were enabled – they were not. 
+    3. Ordered replacement BIOS chip (SST 49LF040) and extractor tool from ultrabios.
+    4. Here is a photo.
+    5. The chip (4 MBits or 512MBytes) fits a PLCC-32 (32 pin) socket. I bought the extractor tool as a precaution.
+    6. I found a guy, Frank, who is from China and now lives in Markham (just north of Toronto). Frank has lots of experience of soldering components onto motherboards. You can reach Frank at biosxp.net. 
+    7. Frank did this modification for me. He did a wonderful job and only charged $50 for his labour and parts. Here's a photo of his work.
+    8. I then put my PC back together and inserted the new BIOS chip into the socket. Here's a photo.
+    9. So now I had a PC with two BIOS chips (both with Award BIOS F9) and with a flick of a switch I could boot from either BIOS.
+    10. I got a NABU (circa 1983) dumb terminal from a friend at work and connected it to my PC's serial port.  You'll need this because LinuxBIOS sends log messages to the serial port. Without it you won't see any boot-up messages. 
+    11. I enabled the telnet server on my PC and connected to it with the NABU terminal. I had to set the baud rate to 19200 in /etc/inittab because this was the maximum the NABU could handle.
+	s0:2345:respawn:/sbin/agetty -L -h ttyS0 1 19200 vt100-nav
+    12. I found out later that this was a dumb idea because the boot-up messages streamed to the serial port by LinuxBIOS were going much faster then 19200 and I just got garbage on the screen. Later I dumped the NABU and set up a second PC with minicom. I set the serial port speed to 115200 baud. Now I could see the boot-up messages. NOTE: The minicom PC should be connected to the LinuxBIOS PC with a serial null modem cable. I bouht one at a surplus computer store for $4.
+    13. Now I had to start dealing with software so I tried to follow the build tutorial for my board.
+    14. The first thing I did was download, build and install flashrom, which I will need to program my bios chip. Here are the steps:
+	svn co svn://linuxbios.org/repos/trunk/util/flashrom
+	make
+	make install (do this as root and it will put the flashrom program into /usr/local/bin)
+    15. Now I made a backup image of my BIOS like this:
+	flashrom -r award-bios.f9
+    16. Of course, you should be root when running flashrom so be careful.
+    17. For more help with flashrom you can use the -h option to view the syntax and options.
+    18. Now I had to download, configure and build FILO, which would be my payload.
+       svn co svn://openbios.org/filo/trunk/filo-0.5       
+    19. Change to the filo-0.5 directory and run the make command. This will create a Config file which you need to modify. Here's my Config file.
+    20. Notice that the Config file will be using GRUB emulation mode to load the Linux kernel. For this reason the Config file must include the full path name of your menu.lst file, which is the default name of GRUB's menu file. Also notice that the device name I use is hde3, which FILO recognizes as sda3.
+    21. My menu.lst file is named lbmenu.lst. You can see how it resembles a regular GRUB menu file. But make note of the root device, (hda4,2), which is equivalent to sda3.
+    22. You'll also notice the lbmenu.lst file contains the tty port (ttyS0 or COM1) and the baud rate (115200) that LinuxBIOS will use to stream boot-up (log) messages.
+    23. Now run make again and this will produce filo.elf, the payload, which we'll need later when we build LinuxBIOS.
+    24. At last we now need to download, configure and build the LinuxBIOS. The product of this effort will be a BIOS image (linuxbios.rom) which we'll flash to our second BIOS chip using the flashrom program. 
+	svn co svn://linuxbios.org/repos/trunk/LinuxBIOSv2
+    25. We'll be using version 2, the stable version. Version 3 is still under development. 
+    26. Change to directory LinuxBIOSv2/targets/gigabyte and create a directory named payloads. Copy the filo.elf payload file that you created earlier to this payloads directory.
+    27. Change to directory LinuxBIOSv2/targets and run the command
+	./buildtarget gigabyte/m57sli
+    28. Edit the file targets/gigabyte/m57sli/Config.lb updating all the lines that start with 'payload'. There are 2 occurrences, one for the normal image, and one for the fallback image.
+    29. Finally we can build the BIOS image by changing to directory LinuxBIOSv2/targets/gigabyte/m57sli/m57sli and running the make command. Yes, there are two directories named m57sli – it's not a typo.
+    30. If all goes well you should see a file named linuxbios.rom (512K) in the directory.
+    31. Now you can switch to your new BIOS chip. In my setup I installed a toggle switch on the back of my PC. I also labeled the switch (ORIG and NEW) so I'd always know which is which.
+    32. Use flashrom to flash your new BIOS chip. You'll need to be root to do this. 
+	flashrom -v -w linuxbios.rom
+    33. So now you should have the Award BIOS sitting in the original chip and the LinuxBIOS in the new chip.
+    34. Go to your monitor PC and start minicom. You'll need to set the modem initialization string to ~^M~. You can also use CTRL-A L to turn on the capture file.
+    35. Now power off your linuxBIOS PC, as a reset may not work. Now power it on and watch the messages on your logging PC. After some time you should get a graphical login prompt on your LinuxBIOS PC. 
+    36. Have a lot of fun.
